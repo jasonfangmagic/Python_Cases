@@ -27,6 +27,16 @@ df_cancer.tail()
 sns.pairplot(df_cancer, hue = 'target',vars = ['mean radius', 'mean texture','mean perimeter', 'mean area',
  'mean smoothness'], height=2)
 
+sns.countplot(df_cancer['target'])
+
+sns.scatterplot(x = 'mean area', y = 'mean smoothness', hue = 'target', data = df_cancer)
+
+plt.figure(figsize=(20,10))
+sns.heatmap(df_cancer.corr(), annot= True)
+
+#create the model
+
+
 
 
 
