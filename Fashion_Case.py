@@ -84,8 +84,6 @@ cnn_model.add(Conv2D(64,3, 3, input_shape = (28,28,1), activation='relu'))
 cnn_model.add(MaxPooling2D(pool_size = (2, 2)))
 cnn_model.add(Dropout(0.25))
 
-# cnn_model.add(Conv2D(32,3, 3, activation='relu'))
-# cnn_model.add(MaxPooling2D(pool_size = (2, 2)))
 cnn_model.add(Flatten())
 cnn_model.add(Dense(output_dim = 32, activation = 'relu'))
 cnn_model.add(Dense(output_dim = 10, activation = 'sigmoid'))
@@ -105,8 +103,8 @@ evaluation = cnn_model.evaluate(X_test, y_test)
 print('Test Accuracy : {:.3f}'.format(evaluation[1]))
 
 import pickle
-# with open("fashion.pickle", "wb") as f:
-#     pickle.dump(cnn_model, f)
+with open("fashion.pickle", "wb") as f:
+    pickle.dump(cnn_model, f)
 #
 pickle_in = open("fashion.pickle", "rb")
 cnn_model = pickle.load(pickle_in)
