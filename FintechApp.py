@@ -74,6 +74,7 @@ dataset.dtypes
 
 # Selecting Time For Response
 dataset["difference"] = (dataset.enrolled_date-dataset.first_open).astype('timedelta64[h]')
+
 response_hist = plt.hist(dataset["difference"].dropna(), color='#3F5D7D')
 plt.title('Distribution of Time-Since-Screen-Reached')
 plt.show()
@@ -139,8 +140,114 @@ dataset.head()
 dataset.describe()
 dataset.columns
 
-#dataset.to_csv('new_appdata10.csv', index = False)
+dataset.to_csv('newappdata10.csv', index = False)
+
+import time
+
+dataset = pd.read_csv('P39-CS3-Data/newappdata10.csv')
+
+# Splitting Independent and Response Variables
+response = dataset["enrolled"]
+dataset = dataset.drop(columns="enrolled")
+
+# Feature Scaling
+# Removing Identifiers
+
+X = dataset.drop(columns = ['user'])
+y = dataset["enrolled"]
+
+from sklearn.preprocessing import StandardScaler
+sc = StandardScaler()
+X = sc.fit_transform(X)
+print(X)
+
+# Splitting the dataset into the Training set and Test set
+from sklearn.model_selection import train_test_split
+X_train, X_test, y_train, y_test = train_test_split(X, y,
+                                                    test_size = 0.2,
+                                                    random_state = 0)
+
+# Removing Identifiers
+train_identity = X_train['user']
+X_train = X_train.drop(columns = ['user'])
+test_identity = X_test['user']
+X_test = X_test.drop(columns = ['user'])
+
+# Feature Scaling
+from sklearn.preprocessing import StandardScaler
+sc_X = StandardScaler()
+X_train2 = pd.DataFrame(sc_X.fit_transform(X_train))
+X_test2 = pd.DataFrame(sc_X.transform(X_test))
+X_train2.columns = X_train.columns.values
+X_test2.columns = X_test.columns.values
+X_train2.index = X_train.index.values
+X_test2.index = X_test.index.values
+X_train = X_train2
+X_test = X_test2
+
+# Fitting Model to the Training Set
+from sklearn.linear_model import LogisticRegression
+classifier = LogisticRegression(random_state = 0, penalty = 'l2')
+classifier.fit(X_train, y_train)
+
+# Training the Random Forest Classification model on the Training set
+from sklearn.ensemble import RandomForestClassifier
+classifier = RandomForestClassifier(n_estimators = 10, criterion = 'entropy', random_state = 0)
+classifier.fit(X_train, y_train)
+
+#ANN
+#array
+
+import tensorflow as tf
+
+ann = tf.keras.models.Sequential()
+ann.add(tf.keras.layers.Dense(units=6, activation='relu'))
+ann.add(tf.keras.layers.Dense(units=6, activation='relu'))
+# Adding the second hidden layer
+ann.add(tf.keras.layers.Dense(units=6, activation='relu'))
+# Adding the output layer
+ann.add(tf.keras.layers.Dense(units=1, activation='sigmoid'))
+
+# Compiling the ANN
+ann.compile(optimizer = 'adam', loss = 'binary_crossentropy', metrics = ['accuracy'])
+
+# Training the ANN on the Training set
+X_train = np.asarray(X_train)
+y_train = np.asarray(y_train)
+ann.fit(X_train, y_train, batch_size = 32, epochs = 100)
+
+y_pred = ann.predict(X_test)
+y_pred = (y_pred > 0.5)
+print(np.concatenate((y_pred.reshape(len(y_pred),1), y_test.reshape(len(y_test),1)),1))
 
 
+# Predicting Test Set
+y_pred = classifier.predict(X_test)
 
+# Evaluating Results
+from sklearn.metrics import confusion_matrix, accuracy_score, f1_score, precision_score, recall_score
+cm = confusion_matrix(y_test, y_pred)
+print(cm)
 
+f1 = f1_score(y_test, y_pred)
+print(f1)
+
+acc=accuracy_score(y_test, y_pred)
+print(acc)
+
+df_cm = pd.DataFrame(cm, index = (0, 1), columns = (0, 1))
+plt.figure(figsize = (10,7))
+sns.set(font_scale=1.4)
+sns.heatmap(df_cm, annot=True, fmt='g')
+print("Test Data Accuracy: %0.4f" % accuracy_score(y_test, y_pred))
+
+# Applying k-Fold Cross Validation
+from sklearn.model_selection import cross_val_score
+accuracies = cross_val_score(estimator = classifier, X = X_train, y = y_train, cv = 10)
+print(accuracies)
+print("Logistic Accuracy: %0.3f (+/- %0.3f)" % (accuracies.mean(), accuracies.std() * 2))
+
+# Formatting Final Results
+final_results = pd.concat([y_test, test_identity], axis = 1).dropna()
+final_results['predicted_reach'] = y_pred
+final_results = final_results[['user', 'enrolled', 'predicted_reach']].reset_index(drop=True)
