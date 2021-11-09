@@ -214,6 +214,7 @@ ann.compile(optimizer = 'adam', loss = 'binary_crossentropy', metrics = ['accura
 # Training the ANN on the Training set
 X_train = np.asarray(X_train)
 y_train = np.asarray(y_train)
+
 ann.fit(X_train, y_train, batch_size = 32, epochs = 100)
 
 y_pred = ann.predict(X_test)
